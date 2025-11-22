@@ -1,4 +1,43 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# StockMaster - Inventory Management System
+
+A modern, responsive Inventory Management System (IMS) built with React, TypeScript, and Next.js 15.
+
+## 🚀 Features
+
+### Authentication
+- Login, Sign Up, Forgot Password, Reset Password with mock backend
+
+### Dashboard
+- Real-time KPI cards, dynamic filtering, recent operations table
+
+### Products Management
+- Complete CRUD operations, search, filter, view stock by location
+
+### Operations Module
+- Receipts (incoming goods), Deliveries (outgoing), Transfers (between warehouses), Adjustments (inventory fixes)
+
+### More
+- Warehouse management, Stock ledger, Settings, Profile management
+
+## 📋 Tech Stack
+- Next.js 15.5.6 (App Router), TypeScript 5, Tailwind CSS 4, Lucide React
+
+## 📁 Project Structure
+```
+app/          # Pages (login, dashboard, products, operations, etc.)
+src/api/      # API layer with TODO comments for backend integration
+src/components/ # Reusable components (DashboardLayout, StatusBadge, Modal)
+src/types/    # TypeScript definitions
+```
+
+## 🔌 API Integration
+All API calls are mocked. Each file in `src/api/` has TODO comments like:
+```typescript
+// TODO: connect to GET /products
+// TODO: POST /receipts/{id}/confirm
+```
+
+Replace mock Promises with real fetch/axios calls to integrate with your backend.
 
 ## Getting Started
 
