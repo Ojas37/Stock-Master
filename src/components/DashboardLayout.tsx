@@ -3,7 +3,7 @@
 import { ReactNode, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
-import { Home, Package, FileText, Warehouse, History, Settings, User, LogOut, ChevronRight } from 'lucide-react';
+import { Home, Package, FileText, Warehouse, History, Settings, User, LogOut, ChevronRight, Bot } from 'lucide-react';
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -17,6 +17,7 @@ interface UserData {
 
 const navigationItems = [
   { name: 'Dashboard', href: '/dashboard', icon: Home },
+  { name: 'AI Assistant', href: '/ai-chat', icon: Bot, badge: 'NEW' },
   { name: 'Products', href: '/products', icon: Package },
   {
     name: 'Operations',
@@ -131,6 +132,11 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   >
                     {item.icon && <item.icon className="w-5 h-5" />}
                     {item.name}
+                    {(item as any).badge && (
+                      <span className="ml-auto px-2 py-0.5 text-xs font-bold bg-purple-600 text-white rounded-full">
+                        {(item as any).badge}
+                      </span>
+                    )}
                   </Link>
                 );
               })}

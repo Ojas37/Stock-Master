@@ -6,6 +6,7 @@ import productRoutes from './routes/products';
 import warehouseRoutes from './routes/warehouses';
 import operationRoutes from './routes/operations';
 import dashboardRoutes from './routes/dashboard';
+import aiChatRoutes from './routes/aiChat';
 import { closePool } from './config/database';
 
 dotenv.config({ path: '.env.local' });
@@ -42,6 +43,7 @@ app.use('/api/products', productRoutes);
 app.use('/api/warehouses', warehouseRoutes);
 app.use('/api/operations', operationRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/ai-chat', aiChatRoutes);
 
 // 404 handler
 app.use((req: Request, res: Response) => {
