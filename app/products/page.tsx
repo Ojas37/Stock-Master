@@ -44,13 +44,33 @@ export default function ProductsPage() {
   };
 
   const handleSaveProduct = async () => {
-    if (editingProduct.id) {
-      await updateProduct(editingProduct.id, editingProduct);
-    } else {
-      await createProduct(editingProduct);
+    try {
+      // Validate required fields
+      const unitPrice = typeof editingProduct.unitPrice === 'string' 
+        ? parseFloat(editingProduct.unitPrice) 
+        : editingProduct.unitPrice;
+      
+      if (!editingProduct.sku || !editingProduct.name || !editingProduct.category || !unitPrice || isNaN(unitPrice) || unitPrice <= 0) {
+        alert('Please fill in all required fields: SKU, Name, Category, and a valid Unit Price (greater than 0)');
+        return;
+      }
+
+      const productData = {
+        ...editingProduct,
+        unitPrice: unitPrice,
+      };
+
+      if (productData.id) {
+        await updateProduct(productData.id, productData);
+      } else {
+        await createProduct(productData);
+      }
+      setIsFormModalOpen(false);
+      loadProducts();
+    } catch (error: any) {
+      alert(error.message || 'Failed to save product');
+      console.error('Save product error:', error);
     }
-    setIsFormModalOpen(false);
-    loadProducts();
   };
 
   const handleDeleteProduct = async (id: string) => {
@@ -119,6 +139,7 @@ export default function ProductsPage() {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">SKU</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Product Name</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Unit Price</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Unit</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Reorder Level</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total Stock</th>
@@ -131,6 +152,7 @@ export default function ProductsPage() {
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">{product.sku}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm">{product.name}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm">{product.category}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm">${product.unitPrice?.toFixed(2)}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm">{product.unitOfMeasure}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm">{product.reorderLevel}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm">{product.totalStock}</td>
@@ -185,10 +207,24 @@ export default function ProductsPage() {
                   <p className="mt-1">{selectedProduct.category}</p>
                 </div>
                 <div>
+                  <label className="block text-sm font-medium text-gray-700">Unit Price</label>
+                  <p className="mt-1">${selectedProduct.unitPrice?.toFixed(2)}</p>
+                </div>
+                <div>
                   <label className="block text-sm font-medium text-gray-700">Unit of Measure</label>
                   <p className="mt-1">{selectedProduct.unitOfMeasure}</p>
                 </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Total Stock</label>
+                  <p className="mt-1">{selectedProduct.totalStock}</p>
+                </div>
               </div>
+              {selectedProduct.description && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Description</label>
+                  <p className="mt-1 text-gray-600">{selectedProduct.description}</p>
+                </div>
+              )}
 
               <div>
                 <h3 className="text-lg font-semibold mb-3">Stock by Location</h3>
@@ -254,13 +290,36 @@ export default function ProductsPage() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Unit of Measure</label>
-              <input
-                type="text"
-                value={editingProduct.unitOfMeasure || ''}
-                onChange={(e) => setEditingProduct({ ...editingProduct, unitOfMeasure: e.target.value })}
+              <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+              <textarea
+                value={editingProduct.description || ''}
+                onChange={(e) => setEditingProduct({ ...editingProduct, description: e.target.value })}
+                rows={2}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black"
               />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Unit Price *</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={editingProduct.unitPrice || ''}
+                  onChange={(e) => setEditingProduct({ ...editingProduct, unitPrice: parseFloat(e.target.value) })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black"
+                  placeholder="0.00"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Unit of Measure</label>
+                <input
+                  type="text"
+                  value={editingProduct.unitOfMeasure || ''}
+                  onChange={(e) => setEditingProduct({ ...editingProduct, unitOfMeasure: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black"
+                  placeholder="Unit"
+                />
+              </div>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Reorder Level</label>
@@ -269,6 +328,7 @@ export default function ProductsPage() {
                 value={editingProduct.reorderLevel || ''}
                 onChange={(e) => setEditingProduct({ ...editingProduct, reorderLevel: parseInt(e.target.value) })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black"
+                placeholder="45"
               />
             </div>
             <div className="flex gap-3 pt-4">

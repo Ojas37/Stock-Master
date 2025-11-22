@@ -10,24 +10,24 @@ export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [otpSent, setOtpSent] = useState(false);
+  const [success, setSuccess] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setSuccess('');
     setLoading(true);
 
     try {
-      const result: any = await requestResetOTP(email);
-
-      if (result.success) {
-        setOtpSent(true);
-        alert('OTP sent to your email!');
-        // Navigate to reset password page with email
+      await requestResetOTP(email);
+      setSuccess('OTP sent to your email! Check the console and proceed to reset password.');
+      
+      // Navigate to reset password page with email after 2 seconds
+      setTimeout(() => {
         router.push(`/reset-password?email=${encodeURIComponent(email)}`);
-      }
+      }, 2000);
     } catch (err) {
-      setError('Failed to send OTP. Please try again.');
+      setError(err instanceof Error ? err.message : 'Failed to send OTP. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -48,6 +48,12 @@ export default function ForgotPasswordPage() {
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
               {error}
+            </div>
+          )}
+
+          {success && (
+            <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded">
+              {success}
             </div>
           )}
 

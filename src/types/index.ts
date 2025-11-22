@@ -12,9 +12,12 @@ export interface Product {
   sku: string;
   name: string;
   category: string;
+  description?: string;
+  unitPrice: number;
   unitOfMeasure: string;
   reorderLevel: number;
   totalStock: number;
+  status?: string;
 }
 
 export interface StockByLocation {
@@ -39,7 +42,7 @@ export interface Location {
   code: string;
 }
 
-export type OperationStatus = 'draft' | 'waiting' | 'ready' | 'done' | 'canceled';
+export type OperationStatus = 'draft' | 'pending' | 'waiting' | 'ready' | 'completed' | 'done' | 'canceled';
 export type OperationType = 'receipt' | 'delivery' | 'transfer' | 'adjustment';
 
 export interface Receipt {

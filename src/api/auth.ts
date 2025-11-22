@@ -1,4 +1,5 @@
-// Authentication API placeholders
+// Authentication API - Connected to Backend
+import { API_BASE_URL, handleResponse } from './config';
 
 interface LoginCredentials {
   email: string;
@@ -11,72 +12,235 @@ interface SignupData {
   password: string;
 }
 
+interface VerifyOTPData {
+  email: string;
+  otp: string;
+}
+
 interface ResetPasswordData {
   email: string;
   otp: string;
   newPassword: string;
 }
 
-// TODO: connect to POST /auth/login
-export const login = async (credentials: LoginCredentials) => {
-  // Mock implementation
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        success: true,
-        user: {
-          id: '1',
-          name: 'John Doe',
-          email: credentials.email,
-          role: 'manager',
-        },
-        token: 'mock-jwt-token',
-      });
-    }, 1000);
-  });
-};
-
-// TODO: connect to POST /auth/signup
+/**
+ * User Registration - Creates account and sends OTP email
+ * POST /api/auth/signup
+ */
 export const signup = async (data: SignupData) => {
-  // Mock implementation
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        success: true,
-        message: 'Account created successfully',
-      });
-    }, 1000);
-  });
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/auth/signup`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+
+    const result = await handleResponse<{
+      success: boolean;
+      message: string;
+      requiresVerification?: boolean;
+      email?: string;
+      token?: string;
+      user?: any;
+    }>(response);
+
+    // Store token and user if registration successful without OTP
+    if (result.success && result.token) {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('token', result.token);
+        if (result.user) {
+          localStorage.setItem('user', JSON.stringify(result.user));
+        }
+      }
+    }
+
+    return result;
+  } catch (error: any) {
+    console.error('Signup error:', error);
+    return {
+      success: false,
+      message: error.message || 'Signup failed. Please try again.',
+    };
+  }
 };
 
-// TODO: connect to POST /auth/request-reset-otp
+/**
+ * Verify OTP after registration
+ * POST /api/auth/verify-otp
+ */
+export const verifySignupOTP = async (data: VerifyOTPData) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/auth/verify-otp`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+
+    const result = await handleResponse<{
+      success: boolean;
+      message: string;
+      token?: string;
+      user?: any;
+    }>(response);
+
+    // Store token and user after successful verification
+    if (result.success && result.token) {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('token', result.token);
+        if (result.user) {
+          localStorage.setItem('user', JSON.stringify(result.user));
+        }
+      }
+    }
+
+    return result;
+  } catch (error: any) {
+    console.error('OTP verification error:', error);
+    return {
+      success: false,
+      message: error.message || 'Verification failed. Please try again.',
+    };
+  }
+};
+
+/**
+ * User Login
+ * POST /api/auth/login
+ */
+export const login = async (credentials: LoginCredentials) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(credentials),
+    });
+
+    const result = await handleResponse<{
+      success: boolean;
+      message?: string;
+      token?: string;
+      user?: any;
+    }>(response);
+
+    // Store token and user data in localStorage
+    if (result.success && result.token) {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('token', result.token);
+        if (result.user) {
+          localStorage.setItem('user', JSON.stringify(result.user));
+        }
+      }
+    }
+
+    return result;
+  } catch (error: any) {
+    console.error('Login error:', error);
+    return {
+      success: false,
+      message: error.message || 'Login failed. Please try again.',
+    };
+  }
+};
+
+/**
+ * Request password reset OTP
+ * POST /api/auth/request-reset
+ */
 export const requestResetOTP = async (email: string) => {
-  // Mock implementation
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        success: true,
-        message: 'OTP sent to your email',
-      });
-    }, 1000);
-  });
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/auth/request-reset`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email }),
+    });
+
+    const result = await handleResponse<{
+      success: boolean;
+      message: string;
+    }>(response);
+
+    return result;
+  } catch (error: any) {
+    console.error('Request OTP error:', error);
+    return {
+      success: false,
+      message: error.message || 'Failed to send OTP. Please try again.',
+    };
+  }
 };
 
-// TODO: connect to POST /auth/reset-password
+/**
+ * Reset password with OTP verification
+ * POST /api/auth/reset-password
+ */
 export const resetPassword = async (data: ResetPasswordData) => {
-  // Mock implementation
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        success: true,
-        message: 'Password reset successfully',
-      });
-    }, 1000);
-  });
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/auth/reset-password`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+
+    const result = await handleResponse<{
+      success: boolean;
+      message: string;
+    }>(response);
+
+    return result;
+  } catch (error: any) {
+    console.error('Reset password error:', error);
+    return {
+      success: false,
+      message: error.message || 'Password reset failed. Please try again.',
+    };
+  }
 };
 
+/**
+ * Resend OTP (reuses signup flow - backend will send new OTP)
+ * POST /api/auth/request-reset
+ */
+export const resendOTP = async (email: string) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/auth/request-reset`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email }),
+    });
+
+    const result = await handleResponse<{
+      success: boolean;
+      message: string;
+    }>(response);
+
+    return result;
+  } catch (error: any) {
+    console.error('Resend OTP error:', error);
+    return {
+      success: false,
+      message: error.message || 'Failed to resend OTP. Please try again.',
+    };
+  }
+};
+
+/**
+ * Logout
+ */
 export const logout = () => {
-  // Clear local storage
-  localStorage.removeItem('user');
-  localStorage.removeItem('token');
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem('user');
+    localStorage.removeItem('token');
+  }
 };

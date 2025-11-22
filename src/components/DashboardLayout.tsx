@@ -1,12 +1,18 @@
 'use client';
 
-import { ReactNode } from 'react';
+import { ReactNode, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { Home, Package, FileText, Warehouse, History, Settings, User, LogOut, ChevronRight } from 'lucide-react';
 
 interface DashboardLayoutProps {
   children: ReactNode;
+}
+
+interface UserData {
+  name: string;
+  email: string;
+  role?: string;
 }
 
 const navigationItems = [
@@ -19,7 +25,7 @@ const navigationItems = [
       { name: 'Receipts', href: '/operations/receipts' },
       { name: 'Delivery Orders', href: '/operations/deliveries' },
       { name: 'Internal Transfers', href: '/operations/transfers' },
-      { name: 'Stock Adjustments', href: '/operations/adjustments' },
+      { name: 'Physical Count & Adjustments', href: '/operations/adjustments' },
     ],
   },
   { name: 'Warehouses & Locations', href: '/warehouses', icon: Warehouse },
@@ -31,10 +37,32 @@ const navigationItems = [
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const router = useRouter();
   const pathname = usePathname();
+  const [user, setUser] = useState<UserData | null>(null);
+
+  useEffect(() => {
+    // Get user data from localStorage
+    if (typeof window !== 'undefined') {
+      const userStr = localStorage.getItem('user');
+      if (userStr) {
+        try {
+          const userData = JSON.parse(userStr);
+          setUser(userData);
+        } catch (error) {
+          console.error('Failed to parse user data:', error);
+          // If parsing fails, redirect to login
+          router.push('/login');
+        }
+      } else {
+        // No user data, redirect to login
+        router.push('/login');
+      }
+    }
+  }, [router]);
 
   const handleLogout = () => {
     localStorage.removeItem('user');
     localStorage.removeItem('token');
+    setUser(null);
     router.push('/login');
   };
 
@@ -49,8 +77,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             </div>
             <div className="flex items-center gap-4">
               <span className="text-sm text-gray-600">
-                {typeof window !== 'undefined' && localStorage.getItem('user') && 
-                  JSON.parse(localStorage.getItem('user')!).name}
+                {user?.name || 'Guest'}
               </span>
               <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center">
                 <User className="w-6 h-6 text-gray-600" />

@@ -40,21 +40,23 @@ export default function ResetPasswordPage() {
       return;
     }
 
+    if (formData.newPassword.length < 8) {
+      setError('Password must be at least 8 characters long');
+      return;
+    }
+
     setLoading(true);
 
     try {
-      const result: any = await resetPassword({
+      await resetPassword({
         email: formData.email,
         otp: formData.otp,
         newPassword: formData.newPassword,
       });
-
-      if (result.success) {
-        alert('Password reset successfully! Please login with your new password.');
-        router.push('/login');
-      }
+      alert('Password reset successfully! Please login with your new password.');
+      router.push('/login');
     } catch (err) {
-      setError('Password reset failed. Please check your OTP and try again.');
+      setError(err instanceof Error ? err.message : 'Password reset failed. Please check your OTP and try again.');
     } finally {
       setLoading(false);
     }
@@ -104,11 +106,15 @@ export default function ResetPasswordPage() {
                 name="otp"
                 type="text"
                 required
+                maxLength={6}
                 value={formData.otp}
-                onChange={handleChange}
-                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
-                placeholder="Enter OTP"
+                onChange={(e) => setFormData({ ...formData, otp: e.target.value.replace(/\D/g, '') })}
+                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-500 text-gray-900 text-center text-xl tracking-widest focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
+                placeholder="000000"
               />
+              <p className="mt-1 text-xs text-gray-500 text-center">
+                Check your console for the OTP (email simulation)
+              </p>
             </div>
 
             <div>

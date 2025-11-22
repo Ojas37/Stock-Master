@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { login } from '@/src/api/auth';
+import { login, resendOTP } from '@/src/api/auth';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -11,25 +11,53 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [showResendOTP, setShowResendOTP] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setSuccess('');
+    setLoading(true);
+    setShowResendOTP(false);
+
+    try {
+      const result = await login({ email, password });
+      
+      // Store user data
+      localStorage.setItem('user', JSON.stringify(result.user));
+      if (result.token) {
+        localStorage.setItem('token', result.token);
+      }
+      
+      // Redirect to dashboard
+      router.push('/dashboard');
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Login failed. Please try again.';
+      setError(errorMessage);
+      
+      // Show resend OTP option if email not verified
+      if (errorMessage.includes('verify your email')) {
+        setShowResendOTP(true);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResendOTP = async () => {
+    setError('');
+    setSuccess('');
     setLoading(true);
 
     try {
-      const result: any = await login({ email, password });
-      
-      if (result.success) {
-        // Store user data
-        localStorage.setItem('user', JSON.stringify(result.user));
-        localStorage.setItem('token', result.token);
-        
-        // Redirect to dashboard
-        router.push('/dashboard');
-      }
+      await resendOTP(email);
+      setSuccess('A new OTP has been sent to your email. Check the console and go to signup page to verify.');
+      setTimeout(() => {
+        router.push('/signup');
+      }, 2000);
     } catch (err) {
-      setError('Login failed. Please try again.');
+      setError(err instanceof Error ? err.message : 'Failed to resend OTP');
     } finally {
       setLoading(false);
     }
@@ -47,6 +75,22 @@ export default function LoginPage() {
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
               {error}
+              {showResendOTP && (
+                <button
+                  type="button"
+                  onClick={handleResendOTP}
+                  disabled={loading}
+                  className="mt-2 text-sm underline hover:no-underline"
+                >
+                  Resend verification OTP
+                </button>
+              )}
+            </div>
+          )}
+
+          {success && (
+            <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded">
+              {success}
             </div>
           )}
 

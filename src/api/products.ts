@@ -1,113 +1,138 @@
 import { Product, StockByLocation } from '../types';
+import { fetchWithAuth, handleResponse } from './config';
 
-// TODO: GET /products
+// GET /api/products - Fetch all products with optional filters
 export const getProducts = async (filters?: any): Promise<Product[]> => {
-  // Mock data
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve([
-        {
-          id: '1',
-          sku: 'PROD-001',
-          name: 'Laptop Computer',
-          category: 'Electronics',
-          unitOfMeasure: 'Unit',
-          reorderLevel: 10,
-          totalStock: 45,
-        },
-        {
-          id: '2',
-          sku: 'PROD-002',
-          name: 'Office Chair',
-          category: 'Furniture',
-          unitOfMeasure: 'Unit',
-          reorderLevel: 5,
-          totalStock: 23,
-        },
-        {
-          id: '3',
-          sku: 'PROD-003',
-          name: 'Printer Paper A4',
-          category: 'Stationery',
-          unitOfMeasure: 'Box',
-          reorderLevel: 50,
-          totalStock: 120,
-        },
-      ]);
-    }, 500);
-  });
+  try {
+    const queryParams = new URLSearchParams();
+    if (filters?.search) queryParams.append('search', filters.search);
+    if (filters?.category) queryParams.append('category', filters.category);
+    if (filters?.status) queryParams.append('status', filters.status);
+
+    const response = await fetchWithAuth(`/api/products?${queryParams.toString()}`);
+    const result = await handleResponse<{ success: boolean; products: any[] }>(response);
+    
+    // Map backend response to frontend Product type
+    return result.products.map((p: any) => ({
+      id: p.id.toString(),
+      sku: p.sku,
+      name: p.name,
+      category: p.category,
+      description: p.description,
+      unitOfMeasure: 'Unit', // Backend doesn't have this field
+      reorderLevel: p.reorder_point,
+      totalStock: p.total_stock,
+      unitPrice: p.unit_price,
+      status: p.status,
+    }));
+  } catch (error) {
+    console.error('Get products error:', error);
+    return [];
+  }
 };
 
-// TODO: GET /products/{id}
-export const getProduct = async (id: string): Promise<Product> => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        id,
-        sku: 'PROD-001',
-        name: 'Laptop Computer',
-        category: 'Electronics',
-        unitOfMeasure: 'Unit',
-        reorderLevel: 10,
-        totalStock: 45,
-      });
-    }, 500);
-  });
+// GET /api/products/:id - Fetch single product
+export const getProduct = async (id: string): Promise<Product | null> => {
+  try {
+    const products = await getProducts();
+    return products.find(p => p.id === id) || null;
+  } catch (error) {
+    console.error('Get product error:', error);
+    return null;
+  }
 };
 
-// TODO: GET /products/{id}/stock-by-location
+// GET /api/products/:id/stock-by-location - Mock for now (backend doesn't have warehouse-level stock yet)
 export const getProductStockByLocation = async (productId: string): Promise<StockByLocation[]> => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve([
-        {
-          warehouseId: '1',
-          warehouseName: 'Main Warehouse',
-          locationId: 'L1',
-          locationName: 'Shelf A-01',
-          quantity: 25,
-        },
-        {
-          warehouseId: '1',
-          warehouseName: 'Main Warehouse',
-          locationId: 'L2',
-          locationName: 'Shelf A-02',
-          quantity: 20,
-        },
-      ]);
-    }, 500);
-  });
+  // This would need a separate backend endpoint for warehouse-level stock tracking
+  // For now, return empty array or implement when backend supports it
+  return [];
 };
 
-// TODO: POST /products
+// POST /api/products - Create new product
 export const createProduct = async (product: Partial<Product>): Promise<Product> => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        id: Date.now().toString(),
-        ...product,
-      } as Product);
-    }, 500);
-  });
+  try {
+    const payload = {
+      sku: product.sku,
+      name: product.name,
+      category: product.category,
+      description: product.description,
+      unit_price: product.unitPrice || 0,
+      reorder_point: product.reorderLevel || 0,
+    };
+    
+    console.log('Creating product with payload:', payload);
+    
+    const response = await fetchWithAuth('/api/products', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+
+    const result = await handleResponse<{ success: boolean; product: any }>(response);
+    
+    return {
+      id: result.product.id.toString(),
+      sku: result.product.sku,
+      name: result.product.name,
+      category: result.product.category,
+      description: result.product.description,
+      unitOfMeasure: 'Unit',
+      reorderLevel: result.product.reorder_point,
+      totalStock: result.product.total_stock,
+      unitPrice: result.product.unit_price,
+      status: result.product.status,
+    };
+  } catch (error: any) {
+    console.error('Create product error:', error);
+    throw error;
+  }
 };
 
-// TODO: PUT /products/{id}
+// PUT /api/products/:id - Update product
 export const updateProduct = async (id: string, product: Partial<Product>): Promise<Product> => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        id,
-        ...product,
-      } as Product);
-    }, 500);
-  });
+  try {
+    const response = await fetchWithAuth(`/api/products/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify({
+        sku: product.sku,
+        name: product.name,
+        category: product.category,
+        description: product.description,
+        unit_price: product.unitPrice,
+        reorder_point: product.reorderLevel,
+        status: product.status,
+      }),
+    });
+
+    const result = await handleResponse<{ success: boolean; product: any }>(response);
+    
+    return {
+      id: result.product.id.toString(),
+      sku: result.product.sku,
+      name: result.product.name,
+      category: result.product.category,
+      description: result.product.description,
+      unitOfMeasure: 'Unit',
+      reorderLevel: result.product.reorder_point,
+      totalStock: result.product.total_stock,
+      unitPrice: result.product.unit_price,
+      status: result.product.status,
+    };
+  } catch (error: any) {
+    console.error('Update product error:', error);
+    throw error;
+  }
 };
 
-// TODO: DELETE /products/{id}
+// DELETE /api/products/:id - Delete product
 export const deleteProduct = async (id: string): Promise<void> => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve();
-    }, 500);
-  });
+  try {
+    const response = await fetchWithAuth(`/api/products/${id}`, {
+      method: 'DELETE',
+    });
+    await handleResponse<{ success: boolean }>(response);
+  } catch (error: any) {
+    console.error('Delete product error:', error);
+    throw error;
+  }
 };

@@ -1,94 +1,115 @@
 import { Warehouse, Location } from '../types';
+import { fetchWithAuth, handleResponse } from './config';
 
-// TODO: GET /warehouses
+// GET /api/warehouses - Fetch all warehouses
 export const getWarehouses = async (): Promise<Warehouse[]> => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve([
-        {
-          id: '1',
-          name: 'Main Warehouse',
-          code: 'WH-001',
-          address: '123 Main St, City, State 12345',
-        },
-        {
-          id: '2',
-          name: 'Warehouse B',
-          code: 'WH-002',
-          address: '456 Industrial Ave, City, State 12345',
-        },
-      ]);
-    }, 500);
-  });
+  try {
+    const response = await fetchWithAuth('/api/warehouses');
+    const result = await handleResponse<{ success: boolean; warehouses: any[] }>(response);
+    
+    return result.warehouses.map((w: any) => ({
+      id: w.id.toString(),
+      name: w.name,
+      code: `WH-${w.id.toString().padStart(3, '0')}`,
+      address: w.location,
+      manager: w.manager,
+      contact: w.contact,
+      capacity: w.capacity,
+      status: w.status,
+    }));
+  } catch (error) {
+    console.error('Get warehouses error:', error);
+    return [];
+  }
 };
 
-// TODO: POST /warehouses
+// POST /api/warehouses - Create new warehouse
 export const createWarehouse = async (warehouse: Partial<Warehouse>): Promise<Warehouse> => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        id: Date.now().toString(),
-        ...warehouse,
-      } as Warehouse);
-    }, 500);
-  });
+  try {
+    const response = await fetchWithAuth('/api/warehouses', {
+      method: 'POST',
+      body: JSON.stringify({
+        name: warehouse.name,
+        location: warehouse.address,
+        capacity: warehouse.capacity || 1000,
+        manager: warehouse.manager,
+        contact: warehouse.contact,
+      }),
+    });
+
+    const result = await handleResponse<{ success: boolean; warehouse: any }>(response);
+    
+    return {
+      id: result.warehouse.id.toString(),
+      name: result.warehouse.name,
+      code: `WH-${result.warehouse.id.toString().padStart(3, '0')}`,
+      address: result.warehouse.location,
+      manager: result.warehouse.manager,
+      contact: result.warehouse.contact,
+      capacity: result.warehouse.capacity,
+      status: result.warehouse.status,
+    };
+  } catch (error: any) {
+    console.error('Create warehouse error:', error);
+    throw error;
+  }
 };
 
-// TODO: PUT /warehouses/{id}
+// PUT /api/warehouses/:id - Update warehouse
 export const updateWarehouse = async (id: string, warehouse: Partial<Warehouse>): Promise<Warehouse> => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        id,
-        ...warehouse,
-      } as Warehouse);
-    }, 500);
-  });
+  try {
+    const response = await fetchWithAuth(`/api/warehouses/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify({
+        name: warehouse.name,
+        location: warehouse.address,
+        capacity: warehouse.capacity,
+        manager: warehouse.manager,
+        contact: warehouse.contact,
+        status: warehouse.status,
+      }),
+    });
+
+    const result = await handleResponse<{ success: boolean; warehouse: any }>(response);
+    
+    return {
+      id: result.warehouse.id.toString(),
+      name: result.warehouse.name,
+      code: `WH-${result.warehouse.id.toString().padStart(3, '0')}`,
+      address: result.warehouse.location,
+      manager: result.warehouse.manager,
+      contact: result.warehouse.contact,
+      capacity: result.warehouse.capacity,
+      status: result.warehouse.status,
+    };
+  } catch (error: any) {
+    console.error('Update warehouse error:', error);
+    throw error;
+  }
 };
 
-// TODO: GET /warehouses/{id}/locations
+// GET /api/warehouses/:id/locations - Mock (backend doesn't have location subdivisions yet)
 export const getWarehouseLocations = async (warehouseId: string): Promise<Location[]> => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve([
-        {
-          id: 'L1',
-          warehouseId,
-          name: 'Shelf A-01',
-          code: 'A-01',
-        },
-        {
-          id: 'L2',
-          warehouseId,
-          name: 'Shelf A-02',
-          code: 'A-02',
-        },
-      ]);
-    }, 500);
-  });
+  // Backend doesn't have location subdivisions within warehouses yet
+  // This would need additional backend implementation
+  return [];
 };
 
-// TODO: POST /warehouses/{id}/locations
+// POST /api/warehouses/:id/locations - Mock (not implemented in backend)
 export const createLocation = async (warehouseId: string, location: Partial<Location>): Promise<Location> => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        id: Date.now().toString(),
-        warehouseId,
-        ...location,
-      } as Location);
-    }, 500);
-  });
+  // Mock implementation - backend location subdivisions not yet implemented
+  return {
+    id: Date.now().toString(),
+    warehouseId,
+    name: location.name || '',
+    code: location.code || '',
+    capacity: 100,
+    currentOccupancy: 0,
+  };
 };
 
-// TODO: PUT /locations/{id}
+// PUT /api/locations/:id - Mock (not implemented in backend)
 export const updateLocation = async (id: string, location: Partial<Location>): Promise<Location> => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        id,
-        ...location,
-      } as Location);
-    }, 500);
-  });
+  // Not implemented in backend yet
+  throw new Error('Location management not implemented in backend');
 };
