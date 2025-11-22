@@ -1,12 +1,23 @@
 import nodemailer from 'nodemailer';
 
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.EMAIL_USER || process.env.NEXT_PUBLIC_EMAIL_USER,
-    pass: process.env.EMAIL_PASSWORD || process.env.NEXT_PUBLIC_EMAIL_PASSWORD,
-  },
-});
+// Create transporter lazily to ensure env vars are loaded
+const getTransporter = () => {
+  const emailUser = process.env.EMAIL_USER || process.env.NEXT_PUBLIC_EMAIL_USER;
+  const emailPassword = process.env.EMAIL_PASSWORD || process.env.NEXT_PUBLIC_EMAIL_PASSWORD;
+  
+  console.log('📧 Email config:', {
+    user: emailUser ? `${emailUser.substring(0, 5)}...` : 'NOT SET',
+    pass: emailPassword ? '***SET***' : 'NOT SET'
+  });
+
+  return nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: emailUser,
+      pass: emailPassword,
+    },
+  });
+};
 
 /**
  * Generate a 6-digit OTP
@@ -82,8 +93,9 @@ export const sendOTPEmail = async (email: string, otp: string, type: 'signup' | 
   `;
 
   try {
+    const transporter = getTransporter();
     await transporter.sendMail({
-      from: `"StockMaster IMS" <${process.env.NEXT_PUBLIC_EMAIL_USER}>`,
+      from: `"StockMaster IMS" <${process.env.EMAIL_USER || process.env.NEXT_PUBLIC_EMAIL_USER}>`,
       to: email,
       subject,
       html,

@@ -7,8 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "server": "ts-node --project backend/tsconfig.json backend/server.ts",
-    "server:dev": "nodemon --watch backend --exec ts-node --project backend/tsconfig.json backend/server.ts"
+    "server": "node -r ts-node/register backend/server.ts",
+    "server:dev": "nodemon --watch backend --exec ts-node --project backend/tsconfig.json backend/server.ts",
+    "server:build": "tsc --project backend/tsconfig.json"
   },
   "dependencies": {
     "@radix-ui/react-checkbox": "^1.3.3",
